@@ -22,6 +22,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { visuallyHidden } from '@mui/utils';
 import { Button, TextField } from '@mui/material';
+import { useState } from 'react';
+import { Search } from '@mui/icons-material';
 
 function createData(name, calories, fat, carbs, protein) {
   return {
@@ -32,6 +34,7 @@ function createData(name, calories, fat, carbs, protein) {
     protein,
   };
 }
+
 
 // const rows = [
 //   createData('Cupcake', 305, 3.7, 67, 4.3),
@@ -49,7 +52,7 @@ function createData(name, calories, fat, carbs, protein) {
 //   createData('Oreo', 437, 18.0, 63, 4.0),
 // ];
 
-const rows = [
+const orginialRows = [
     {
         "name": "Annette Black",
         "trader name":  "Binford Ltd.",
@@ -285,9 +288,30 @@ EnhancedTableHead.propTypes = {
 };
 
 const EnhancedTableToolbar = (props) => {
-  const { numSelected } = props;
+  const { numSelected,rows,setTempRows } = props;
+
+
+
+
+
+const handleKeyword = (e) => {
+
+  const val =
+    rows !== null &&
+    rows.filter((userData) =>
+      JSON.stringify(userData)
+        .toLowerCase()
+        .includes(e.target.value.toLowerCase())
+      // {
+      //   console.log(JSON.stringify(userData).toLowerCase().includes(e.target.value.toLowerCase()))
+      // }
+    );
+
+  setTempRows(val);
+};
 
   return (
+    
     <Toolbar
       sx={{
         pl: { sm: 2 },
@@ -316,10 +340,10 @@ const EnhancedTableToolbar = (props) => {
         width:{lg:"350px", xs:"350px"},
         backgroundColor:"#fff",
         borderRadius:"40px",
-        }} height="76px" value='' onChange={(e)=>{}} placeholder="Search" type="text"></TextField>
+        }} height="76px" onChange={(e) => handleKeyword(e)}  placeholder="Search...." type="text"></TextField>
         </Typography>
       )}
-<Button variant="contained" size="large" sx={{width:"100px"}}> create Task</Button>
+<Button variant="contained" size="large" sx={{width:"100px"}}> Task</Button>
     </Toolbar>
 
   
@@ -331,12 +355,15 @@ EnhancedTableToolbar.propTypes = {
 };
 
 export default function TestTabel() {
+  const [rows,setRows]=useState(orginialRows)
+  const [tempRows,setTempRows]=useState(orginialRows)
   const [order, setOrder] = React.useState('asc');
   const [orderBy, setOrderBy] = React.useState('name');
   const [selected, setSelected] = React.useState([]);
   const [page, setPage] = React.useState(0);
   const [dense, setDense] = React.useState(false);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
+ 
 
   const handleRequestSort = (event, property) => {
    
@@ -349,7 +376,7 @@ export default function TestTabel() {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelected = rows.map((n) => n.name);
+      const newSelected = tempRows.map((n) => n.name);
       setSelected(newSelected);
       return;
     }
@@ -393,12 +420,13 @@ export default function TestTabel() {
 
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - tempRows.length) : 0;
 
   return (
     <Box sx={{ width: '50%',  }} m="auto">
       <Paper sx={{ width: '100%', mb: 2 }}>
-        <EnhancedTableToolbar numSelected={selected.length} />
+        <EnhancedTableToolbar   rows={rows}
+               setTempRows={setTempRows} numSelected={selected.length} />
         <TableContainer>
           <Table
             sx={{ minWidth: 750 }}
@@ -406,6 +434,7 @@ export default function TestTabel() {
             size={dense ? 'small' : 'medium'}
           >
             <EnhancedTableHead
+            
               numSelected={selected.length}
               order={order}
               orderBy={orderBy}
@@ -416,7 +445,7 @@ export default function TestTabel() {
             <TableBody>
               {/* if you don't need to support IE11, you can replace the `stableSort` call with:
                  rows.slice().sort(getComparator(order, orderBy)) */}
-              {stableSort(rows, getComparator(order, orderBy))
+              {stableSort(tempRows, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
                   const isItemSelected = isSelected(row.name);
