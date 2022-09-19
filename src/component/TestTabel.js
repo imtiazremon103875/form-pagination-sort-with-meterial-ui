@@ -14,17 +14,12 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import Checkbox from "@mui/material/Checkbox";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Switch from "@mui/material/Switch";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import { visuallyHidden } from "@mui/utils";
 import { Button, Grid, Modal, TextField } from "@mui/material";
 import { useState } from "react";
-import { Search } from "@mui/icons-material";
+
 import { useForm } from "react-hook-form";
-import { nanoid } from "nanoid";
+
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 
@@ -37,22 +32,6 @@ function createData(name, calories, fat, carbs, protein) {
     protein,
   };
 }
-
-// const rows = [
-//   createData('Cupcake', 305, 3.7, 67, 4.3),
-//   createData('Donut', 452, 25.0, 51, 4.9),
-//   createData('Eclair', 262, 16.0, 24, 6.0),
-//   createData('Frozen yoghurt', 159, 6.0, 24, 4.0),
-//   createData('Gingerbread', 356, 16.0, 49, 3.9),
-//   createData('Honeycomb', 408, 3.2, 87, 6.5),
-//   createData('Ice cream sandwich', 237, 9.0, 37, 4.3),
-//   createData('Jelly Bean', 375, 0.0, 94, 0.0),
-//   createData('KitKat', 518, 26.0, 65, 7.0),
-//   createData('Lollipop', 392, 0.2, 98, 0.0),
-//   createData('Marshmallow', 318, 0, 81, 2.0),
-//   createData('Nougat', 360, 19.0, 9, 37.0),
-//   createData('Oreo', 437, 18.0, 63, 4.0),
-// ];
 
 const orginialRows = [
   {
@@ -254,6 +233,7 @@ const headCells = [
   },
 ];
 
+//Table_heading
 function EnhancedTableHead(props) {
   const {
     onSelectAllClick,
@@ -316,20 +296,45 @@ EnhancedTableHead.propTypes = {
   rowCount: PropTypes.number.isRequired,
 };
 
+//Toolbar_heading
 const EnhancedTableToolbar = (props) => {
   const {
     numSelected,
     rows,
-    setTempRows,
-    setRows,
     tempRows,
+    setTempRows,
+    updateData,
+    setRows,
     setAction,
+    setEditData,
     action,
+    editData,
     open,
     setOpen,
-    updateData,
-    handleEditTask,
   } = props;
+  console.log("main", editData);
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm();
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => {
+    setOpen(false);
+    setEditData("");
+  };
+
+  React.useEffect(() => {
+    setValue("name", editData.name);
+    setValue("trader name", editData["trader name"]);
+    setValue("trader email", editData["trader email"]);
+    setValue("status", editData.status);
+    setValue("maturity date", editData["maturity date"]);
+  }, [editData]);
 
   const handleKeyword = (e) => {
     const val =
@@ -346,46 +351,44 @@ const EnhancedTableToolbar = (props) => {
 
     setTempRows(val);
   };
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm();
-  const onSubmit = (event) => {
-    action === "edit" ? handleEditTask(event) : handleAddTask(event);
 
-    const newContacts = [...rows, event];
-    setRows(newContacts);
-    setTempRows(newContacts);
-  };
-
-  const [addFormData, setAddFormData] = useState({
-    name: "",
-    "trader name": "",
-    "trader email": "",
-    status: "",
-    "maturity date": "",
-  });
-
-  const handleAddFormChange = (event) => {
-    event.preventDefault();
-    const fieldName = event.target.getAttribute("name");
-
-    const fieldValue = event.target.velue;
-
-    const newFormData = { ...addFormData };
-    newFormData[fieldName] = fieldValue;
-    setAddFormData(newFormData);
-  };
-
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-  const handleAddTask = () => {
+  const handleOpenTask = () => {
+    console.log({ editData });
     setAction("add");
     setOpen(true);
+    // reset({ editData });
+  };
+  //react_hook_form_submit
+  const onSubmit = (event) => {
+    // action === "edit" ? handleEditTask(event) : handleAddTask(event);
+    action === "edit"
+      ? handleEditData({ id: editData.id, ...event })
+      : handleCreateTask(event);
+  };
+  const handleEditData = (event) => {
+    console.log({ event });
+    setTempRows(
+      tempRows.map((info) => {
+        if (info.id === event.id) {
+          return event;
+        } else {
+          return info;
+        }
+      })
+    );
+    setOpen(false);
+    reset({ event });
   };
 
+  const handleCreateTask = (event) => {
+    console.log(event);
+    const newContacts = [event, ...rows];
+    console.log({ newContacts });
+    setTempRows(newContacts);
+    setRows(newContacts);
+    setOpen(false);
+    reset({ event });
+  };
   const style = {
     position: "absolute",
     top: "50%",
@@ -431,21 +434,33 @@ const EnhancedTableToolbar = (props) => {
           <TextField
             sx={{
               input: { fontWeight: "600", border: "none", borderRadius: "4px" },
-              width: { lg: "350px", xs: "350px" },
+              width: { lg: "200px", xs: "250px" },
               backgroundColor: "#fff",
               borderRadius: "40px",
             }}
             height="76px"
             onChange={(e) => handleKeyword(e)}
-            placeholder="Search...."
+            placeholder="Search By Name...."
+            type="text"
+          ></TextField>
+          <TextField
+            sx={{
+              input: { fontWeight: "600", border: "none", borderRadius: "4px" },
+              width: { lg: "200px", xs: "250px" },
+              backgroundColor: "#fff",
+              borderRadius: "40px",
+              ml: 5,
+            }}
+            height="76px"
+            onChange={(e) => handleKeyword(e)}
+            placeholder="Search By Email...."
             type="text"
           ></TextField>
         </Typography>
       )}
       <Button
+        onClick={handleOpenTask}
         variant="contained"
-        // onClick={handleOpen}
-        onClick={handleAddTask}
         size="large"
         sx={{ width: "100px" }}
       >
@@ -458,8 +473,8 @@ const EnhancedTableToolbar = (props) => {
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
-        {/* <h1>{action === "add" ? "Add" : "Edit"}</h1> */}
         <Box sx={style}>
+          {JSON.stringify(editData)}
           <Box
             // component="form"
             sx={{
@@ -468,7 +483,6 @@ const EnhancedTableToolbar = (props) => {
             noValidate
             autoComplete="off"
           >
-            <h1>{JSON.stringify(action)}</h1>
             <Grid
               container
               direction="row"
@@ -476,8 +490,7 @@ const EnhancedTableToolbar = (props) => {
               alignItems="center"
             >
               <Typography variant="p" sx={{ mb: 1, fontSize: "24px" }}>
-                {" "}
-                {action === "edit" ? "Edit task" : "Create task"}
+                {action}
               </Typography>
             </Grid>
 
@@ -485,63 +498,49 @@ const EnhancedTableToolbar = (props) => {
               <Grid container>
                 <Grid sx={{ mb: 1 }} item xs={12}>
                   <TextField
-                    onChange={handleAddFormChange}
                     {...register("name", { required: true })}
                     id="outlined-basic"
+                    // defaultValue={editData === "" ? "" : editData.name}
+
                     fullWidth
                     label="Name"
                     variant="outlined"
-                    defaultValue={action === "edit" ? updateData.name : ""}
-                  />{" "}
+                  />
                 </Grid>
                 <Grid sx={{ mb: 1 }} item xs={12}>
                   <TextField
-                    onChange={handleAddFormChange}
                     {...register("trader name", { required: true })}
                     id="outlined-basic"
                     fullWidth
                     label="tader name"
                     variant="outlined"
-                    defaultValue={
-                      action === "edit" ? updateData["trader name"] : ""
-                    }
-                  />{" "}
+                  />
                 </Grid>
                 <Grid sx={{ mb: 1 }} item xs={12}>
                   <TextField
-                    onChange={handleAddFormChange}
                     {...register("trader email", { required: true })}
                     id="outlined-basic"
                     fullWidth
                     label="tader email"
                     variant="outlined"
-                    defaultValue={
-                      action === "edit" ? updateData["trader email"] : ""
-                    }
                   />{" "}
                 </Grid>
                 <Grid sx={{ mb: 1 }} item xs={12}>
                   <TextField
-                    onChange={handleAddFormChange}
                     {...register("status", { required: true })}
                     id="outlined-basic"
                     fullWidth
                     label="status"
                     variant="outlined"
-                    defaultValue={action === "edit" ? updateData["status"] : ""}
                   />{" "}
                 </Grid>
                 <Grid sx={{ mb: 1 }} item xs={12}>
                   <TextField
-                    onChange={handleAddFormChange}
                     {...register("maturity date", { required: true })}
                     id="outlined-basic"
                     fullWidth
                     label="maturity date"
                     variant="outlined"
-                    defaultValue={
-                      action === "edit" ? updateData["maturity date"] : ""
-                    }
                   />{" "}
                 </Grid>
               </Grid>
@@ -557,10 +556,10 @@ const EnhancedTableToolbar = (props) => {
                   type="submit"
                   size="large"
                 >
-                  {action === "edit" ? "Edit task" : "Create task"}
+                  {`${action} Task`}
                 </Button>
 
-                <Button variant="contained" onClick={handleClose} size="large">
+                <Button variant="contained" size="large" onClick={handleClose}>
                   Cancel
                 </Button>
               </Grid>
@@ -576,6 +575,7 @@ EnhancedTableToolbar.propTypes = {
   numSelected: PropTypes.number.isRequired,
 };
 
+//Main_Table
 export default function TestTabel() {
   const [rows, setRows] = useState(orginialRows);
   const [tempRows, setTempRows] = useState(orginialRows);
@@ -585,9 +585,10 @@ export default function TestTabel() {
   const [page, setPage] = React.useState(0);
   const [dense, setDense] = React.useState(false);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const [updateData, setUpdateData] = useState("");
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = React.useState(false);
   const [action, setAction] = useState("");
+  const [editData, setEditData] = useState("");
+  console.log({ editData });
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -644,23 +645,17 @@ export default function TestTabel() {
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - tempRows.length) : 0;
-
+  const handleDeleteTask = (row) => {
+    const filterData = rows.filter((data) => data.id !== row.id);
+    setTempRows(filterData);
+    setRows(filterData);
+  };
   const handleEditTask = (row) => {
+    console.log({ row });
     setAction("edit");
     setOpen(true);
-    setUpdateData(row);
-
-    setTempRows(
-      tempRows?.map((data) => {
-        if (data.id === row.id) {
-          return row;
-        } else {
-          return data;
-        }
-      })
-    );
+    setEditData(row);
   };
-
   return (
     <Box sx={{ width: "50%" }} m="auto">
       <Paper sx={{ width: "100%", mb: 2 }}>
@@ -670,12 +665,12 @@ export default function TestTabel() {
           setTempRows={setTempRows}
           tempRows={tempRows}
           numSelected={selected.length}
-          action={action}
           setAction={setAction}
+          setEditData={setEditData}
+          action={action}
+          editData={editData}
           open={open}
           setOpen={setOpen}
-          updateData={updateData}
-          handleEditTask={handleEditTask}
         />
         <TableContainer>
           <Table
@@ -703,7 +698,6 @@ export default function TestTabel() {
                   return (
                     <TableRow
                       hover
-                      onClick={(event) => handleClick(event, row.name)}
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
@@ -744,6 +738,7 @@ export default function TestTabel() {
                           Edit
                         </Button>{" "}
                         <Button
+                          onClick={() => handleDeleteTask(row)}
                           startIcon={<DeleteIcon />}
                           color="error"
                           size="small"
